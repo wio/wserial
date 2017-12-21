@@ -63,6 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::handleReloadPorts() {
     ui->port->clear();
+    if (ui->monitorButton->isChecked()) {
+        resetMonitor();
+    }
     loadPortsAndSet();
 }
 
@@ -186,6 +189,7 @@ void MainWindow::handleBaudRateChanged(int) {
 inline void MainWindow::stopMonitor() {
     m_monitor->abortFlag = true;
     m_monitor->mutex.lock();
+    m_monitor->abortFlag = false;
     m_monitor->mutex.unlock();
 }
 
