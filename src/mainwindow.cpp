@@ -25,8 +25,9 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_monitor(new Monitor),
-    m_plotterView(nullptr) {
+    m_plotterView(nullptr),
+    m_readFirstPass(true),
+    m_monitorVerticalScrollBarGrabbing(false) {
 
     ui->setupUi(this);
     QList<qint32> baudRates {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
@@ -36,22 +37,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->baudRate->setCurrentIndex(3);
     loadPortsAndSet();
 
-    connect(this, &MainWindow::startMonitor, m_monitor, &Monitor::readAndParse);
-    m_monitor->moveToThread(&m_monitorThread);
-    m_monitorThread.start();
-
-    connect(ui->monitorButton, &QToolButton::toggled, this, &MainWindow::handleMonitorToggle);
+    connect(ui->monitorButton, &QToolButton::toggled, this, &MainWindow::handleMonitorToggled);
     connect(ui->clearButton, &QToolButton::released, ui->plainTextEdit, &QPlainTextEdit::clear);
     connect(ui->sendButton, &QToolButton::released, this, &MainWindow::handleSend);
     connect(ui->portReload, &QToolButton::released, this, &MainWindow::handleReloadPorts);
     connect(ui->port, static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, &MainWindow::handlePortChanged);
-    connect(this, &MainWindow::open, m_monitor, &Monitor::open);
     connect(ui->baudRate, static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, &MainWindow::handleBaudRateChanged);
-    connect(m_monitor, &Monitor::output, this, &MainWindow::handleOutput);
-    connect(m_monitor, &Monitor::error, this, &MainWindow::handleError);
     connect(ui->lineEdit, &QLineEdit::returnPressed, this, &MainWindow::handleSend);
-    connect(ui->plotterButton, &QToolButton::toggled, this, &MainWindow::handlePlotter);
+    connect(ui->plotterButton, &QToolButton::toggled, this, &MainWindow::handlePlotterToggled);
+    connect(&m_serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
 
+    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderPressed, [this]() {
+        m_monitorVerticalScrollBarGrabbing = true;
+    });
+    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderReleased, [this]() {
+        m_monitorVerticalScrollBarGrabbing = false;
+    });
+
+// Apply bundled icons on Windows and macOS
 #if defined _WIN32 || defined __APPLE__
     ui->clearButton->setIcon(QIcon(":/icons/edit-clear.svg"));
     ui->plotterButton->setIcon(QIcon(":/icons/applications-graphics.svg"));
@@ -59,6 +62,29 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->monitorButton->setIcon(QIcon(":/icons/network-receive.svg"));
     ui->portReload->setIcon(QIcon(":/icons/reload.svg"));
 #endif
+}
+
+void MainWindow::closeEvent(QCloseEvent*) {
+    stopMonitor();
+    if (m_plotterView != nullptr) {
+        m_plotterView->close();
+        delete m_plotterView;
+    }
+}
+
+MainWindow::~MainWindow() {
+    delete ui;
+}
+
+void MainWindow::handlePortChanged(int index) {
+    resetMonitor();
+    if (index != -1) {
+        m_serialPort.setPortName(m_availablePorts[index].portName());
+    }
+}
+
+void MainWindow::handleBaudRateChanged(int) {
+    m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
 }
 
 void MainWindow::handleReloadPorts() {
@@ -69,62 +95,130 @@ void MainWindow::handleReloadPorts() {
     loadPortsAndSet();
 }
 
-inline bool MainWindow::tryOpen() {
-    if (!m_monitor->m_serialPort.isOpen()) {
-        m_monitor->openingFlag = true;
-        emit open();
-        while (m_monitor->openingFlag);
-        if (!m_monitor->m_serialPort.isOpen()) return false;
-    }
-    return true;
-}
-
-void MainWindow::handleMonitorToggle(bool checked) {
+void MainWindow::handleMonitorToggled(bool checked) {
     if (checked) {
-        if (tryOpen()) {
-            emit startMonitor();
-        }
+        startMonitor();
     } else {
         stopMonitor();
     }
 }
 
-void MainWindow::handlePlotter(bool checked) {
+void MainWindow::handleReadyRead() {
+    // the first pass generally has corrupted data, so clear the serial port's buffer
+    if (m_readFirstPass) {
+        m_readFirstPass = false;
+        m_serialPort.clear();
+        return;
+    }
+    QByteArray buf = m_serialPort.readAll();
+    if (buf.length() > 0) {
+        const QString cur = QString::fromUtf8(buf);
+        handleOutput(cur);
+        if (ui->plotterButton->isChecked()) {
+            // this regular expression checks for a comma/tab/space separated list
+            // of decimal numbers followed by either CRLF or LF
+            QRegularExpression re("(-?\\d+(\\.\\d+)?([, \\t]+-?\\d+(\\.\\d+)?)*)\\r?\\n");
+            // if the output was broken up into separate packets
+            // we need to keep track of the previous leftover value
+            QString& combined = m_leftover += cur;
+            QRegularExpressionMatchIterator matches = re.globalMatch(combined);
+            int lastMatchIndex = -1;
+            while (matches.hasNext()) {
+                QRegularExpressionMatch match = matches.next();
+                QString line = match.captured(1);
+                QStringList words = line.split(QRegularExpression("[, \\t]+"));
+
+                int i = 0;
+                for (; i < words.length() - 1; ++i) {
+                    QString word = words[i];
+                    bool ok;
+                    double number = word.toDouble(&ok);
+                    if (ok) {
+                        m_plotterView->plotPoint(qreal(number), i, false);
+                    }
+                }
+                QString word = words[i];
+                bool ok;
+                double number = word.toDouble(&ok);
+                if (ok) {
+                    // true to increment the plot after last number in the line
+                    m_plotterView->plotPoint(qreal(number), i, true);
+                }
+                // this returns the first index after the last match
+                // or -1 if nothing was matched
+                lastMatchIndex = match.capturedEnd(0);
+            }
+            if (lastMatchIndex == -1) ++lastMatchIndex;
+            // mid returns the substring starting at lastMatchIndex to the end
+            m_leftover = combined.mid(lastMatchIndex);
+        }
+    }
+}
+
+void MainWindow::handlePlotterToggled(bool checked) {
     if (checked) {
         m_plotterView = new PlotterView;
         m_plotterView->move(x() + 10 + width(), y());
         m_plotterView->show();
         connect(m_plotterView, &PlotterView::finished, ui->plotterButton, &QToolButton::setChecked);
-        connect(m_monitor, &Monitor::plotPoint, m_plotterView, &PlotterView::plotPoint);
     } else {
         m_plotterView->close();
         delete m_plotterView;
         m_plotterView = nullptr;
     }
-    m_monitor->plotFlag = checked;
 }
 
 void MainWindow::handleSend() {
     if (ui->lineEdit->text().length() != 0 &&
             m_availablePorts.length() != 0 &&
             tryOpen()) {
-        m_monitor->m_serialPort.write(ui->lineEdit->text().toUtf8());
-        if (m_monitor->m_serialPort.error() == QSerialPort::WriteError || !m_monitor->m_serialPort.waitForBytesWritten(5000)) {
-            handleError("Failed to write to port");
+        m_serialPort.write(ui->lineEdit->text().toUtf8());
+        if (!m_serialPort.error()) {
+            ui->lineEdit->clear();
         }
-
-        ui->lineEdit->clear();
     }
 }
 
-void MainWindow::handleError(const QString& err, bool monitorReset, bool warning) {
-    if (monitorReset) {
+void MainWindow::handleError(QSerialPort::SerialPortError err) {
+    if (err != QSerialPort::NoError) {
         resetMonitor();
     }
-    if (warning) {
-        QMessageBox::warning(this, "Warning", err, QMessageBox::Ok);
-    } else {
-        QMessageBox::critical(this, "Error", err, QMessageBox::Ok);
+    switch(err) {
+    case QSerialPort::DeviceNotFoundError:
+        loadPortsAndSet();
+        outputError("Device not found");
+        break;
+    case QSerialPort::PermissionError:
+        outputError("Not enough permissions to access the device");
+        break;
+    case QSerialPort::OpenError:
+        // this should never occur, else the code is buggy
+        outputError("Device is already open in this program");
+        break;
+    case QSerialPort::NotOpenError:
+        // this should never occur either
+        outputError("Device is not open before performing actions");
+        break;
+    case QSerialPort::WriteError:
+        outputError("Failed to write to device");
+        break;
+    case QSerialPort::ReadError:
+        outputError("Failed to read from device");
+        break;
+    case QSerialPort::ResourceError:
+        outputError("Failed to access device");
+        break;
+    case QSerialPort::QSerialPort::UnsupportedOperationError:
+        outputError("Operation not supported, or prohibited by the OS");
+        break;
+    case QSerialPort::TimeoutError:
+        // this should never happen either, since we are not polling the device
+        outputError("Operation timed out");
+        break;
+    case QSerialPort::UnknownError:
+        outputError("An unknown error occured");
+    default:
+        break;
     }
 }
 
@@ -135,25 +229,11 @@ void MainWindow::handleOutput(const QString& val) {
     pte->moveCursor(QTextCursor::End);
     pte->insertPlainText(val);
     pte->moveCursor(QTextCursor::End);
-    if (ui->autoScroll->checkState()) {
+    if (ui->autoScroll->checkState() && !m_monitorVerticalScrollBarGrabbing) {
         sb->setValue(sb->maximum());
     } else {
         sb->setValue(sbVal);
     }
-}
-
-void MainWindow::closeEvent(QCloseEvent*) {
-    stopMonitor();
-    m_monitorThread.quit();
-    m_monitorThread.wait();
-    delete m_monitor;
-    if (m_plotterView != nullptr) {
-        handlePlotter(false);
-    }
-}
-
-MainWindow::~MainWindow() {
-    delete ui;
 }
 
 void MainWindow::loadPortsAndSet() {
@@ -168,32 +248,34 @@ void MainWindow::loadPortsAndSet() {
             auto portInfo = m_availablePorts[i];
             ui->port->addItem(QString("%1: %2").arg(portInfo.manufacturer()).arg(portInfo.portName()), i);
         }
-        m_monitor->m_serialPort.setPortName(m_availablePorts[ui->port->currentIndex()].portName());
+        m_serialPort.setPortName(m_availablePorts[ui->port->currentIndex()].portName());
     }
-    m_monitor->m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
+    m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
 }
 
-void MainWindow::handlePortChanged(int index) {
-    resetMonitor();
-    if (index != -1) {
-        m_monitor->m_serialPort.setPortName(m_availablePorts[index].portName());
+inline void MainWindow::startMonitor() {
+    if (tryOpen()) {
+        m_readFirstPass = true;
+        connect(&m_serialPort, &QSerialPort::readyRead, this, &MainWindow::handleReadyRead);
     }
-}
-
-void MainWindow::handleBaudRateChanged(int) {
-    m_monitor->mutex.lock();
-    m_monitor->m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
-    m_monitor->mutex.unlock();
 }
 
 inline void MainWindow::stopMonitor() {
-    m_monitor->abortFlag = true;
-    m_monitor->mutex.lock();
-    m_monitor->abortFlag = false;
-    m_monitor->mutex.unlock();
+    if (m_serialPort.isOpen()) {
+        m_serialPort.close();
+    }
+    disconnect(&m_serialPort, &QSerialPort::readyRead, this, &MainWindow::handleReadyRead);
 }
 
 inline void MainWindow::resetMonitor() {
     stopMonitor();
     ui->monitorButton->setChecked(false);
+}
+
+inline bool MainWindow::tryOpen() {
+    return m_serialPort.isOpen() || m_serialPort.open(QIODevice::ReadWrite);
+}
+
+inline void MainWindow::outputError(const QString& errMesg) {
+    QMessageBox::critical(this, "Error", errMesg, QMessageBox::Ok);
 }

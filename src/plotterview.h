@@ -51,8 +51,19 @@ public slots:
     void handleChangeXRange(const int xRange);
 
 private:
+    /**
+     * Qt UI object that gives access the the UI form
+     */
     Ui::PlotterView *ui;
+
+    /**
+     * The chart view Qt widget which lets us draw line graphs
+     */
     QChartView* chartView;
+
+    /**
+     * The actual chart inside the chart widget on which we can plot lines
+     */
     QChart* chart;
 
     /**
