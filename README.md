@@ -16,13 +16,13 @@ WSerial is a Serial Monitor and a Serial Plotter to visualize data from devices 
 ## Development Instructions for Windows
 1. Install Open Source Qt from this [link](https://www.qt.io/download-qt-for-application-development)
 2. Be sure to select the version of Qt and Qt installer to be >= 5.4. Under the Qt option, you can deselect everything but the following to make the install take up a lot less space:
-- `MinGW (gcc for Windows)`: for some reason, the one bundled with Qt is 32-bit only, but this is easy to use and compatible with `GCC`
+    - `MinGW (gcc for Windows)`: for some reason, the one bundled with Qt is 32-bit only, but this is easy to use and compatible with `GCC`
 
-  (and/or)
+      (and/or)
 
-  `MSVC (MS Visual C++)`: have to install this compiler separately from Microsoft, this option only enables support under Qt
-- Sources: includes most of the Qt libraries, including the serial port library
-- Qt Charts: for the Serial Plotter
+      `MSVC (MS Visual C++)`: have to install this compiler separately from Microsoft, this option only enables support under Qt
+    - Sources: includes most of the Qt libraries, including the serial port library
+    - Qt Charts: for the Serial Plotter
 
 3. Open Qt Creator and drag wserial.pro into the window
 
