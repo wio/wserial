@@ -76,7 +76,6 @@ void Monitor::readAndParse() {
             }
         }
     }
-    abortFlag = false;
 }
 
 void Monitor::open() {

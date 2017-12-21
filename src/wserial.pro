@@ -37,3 +37,5 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
     plotterview.ui
+
+RESOURCES = resources.qrc

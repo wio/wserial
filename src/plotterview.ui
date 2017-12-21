@@ -25,7 +25,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset theme="edit-clear">
+        <iconset theme="user-trash">
          <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>

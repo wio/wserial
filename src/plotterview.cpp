@@ -39,6 +39,10 @@ PlotterView::PlotterView(QWidget *parent) :
 
     connect(ui->clearButton, &QToolButton::released, this, &PlotterView::clear);
     connect(ui->xRangeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &PlotterView::handleChangeXRange);
+
+#if defined _WIN32 || defined _WIN64 || defined(__APPLE__)
+    ui->clearButton->setIcon(QIcon(":/icons/user-trash.svg"));
+#endif
 }
 
 void PlotterView::handleChangeXRange(const int xRange) {

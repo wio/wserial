@@ -1,0 +1,10 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource>
+        <file>icons/user-trash.svg</file>
+        <file>icons/applications-graphics.svg</file>
+        <file>icons/network-transmit.svg</file>
+        <file>icons/network-receive.svg</file>
+        <file>icons/reload.svg</file>
+        <file>icons/edit-clear.svg</file>
+    </qresource>
+</RCC>
