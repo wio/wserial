@@ -1,7 +1,17 @@
 # WSerial
-## Waterloop's best-in-class Serial Monitor/Plotter
 
-Dev instructions as easy as 1...2...3...
+WSerial is a Serial Monitor and a Serial Plotter to visualize data from devices transmitting data using Serial. This is developed at [**Waterloop**](https://teamwaterloop.ca/) and is one of the best-in-class GUI design out there. You can either clone this project and follow the development instructions to build it locally or install our prebuilt binaries (they will be added soon).
+
+## Features
+
+- Scales well on HDPI devices
+- Built using Qt so, it compiles directly on your machine
+- Uses GPU instead of CPU for plotting data on the plotter
+- Flexibility to make the range of X Axis values of the plotter longer and shorter
+- Y Axis scales based on the highest and the lowest value encountered on the screen
+- Allows the opening of Serial window and the plotter at the same time
+- Allows the user to pause the Serial ouput on the screen
+- Allows for changing ports and baudrate
 
 ## Development Instructions for Windows
 1. Install Open Source Qt from this [link](https://www.qt.io/download-qt-for-application-development)
@@ -10,7 +20,7 @@ Dev instructions as easy as 1...2...3...
 
   (and/or)
 
-- `MSVC (MS Visual C++)`: have to install this compiler separately from Microsoft, this option only enables support under Qt
+  `MSVC (MS Visual C++)`: have to install this compiler separately from Microsoft, this option only enables support under Qt
 - Sources: includes most of the Qt libraries, including the serial port library
 - Qt Charts: for the Serial Plotter
 
