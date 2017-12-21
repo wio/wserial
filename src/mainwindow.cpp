@@ -51,6 +51,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_monitor, &Monitor::error, this, &MainWindow::handleError);
     connect(ui->lineEdit, &QLineEdit::returnPressed, this, &MainWindow::handleSend);
     connect(ui->plotterButton, &QToolButton::toggled, this, &MainWindow::handlePlotter);
+
+#if defined _WIN32 || defined __APPLE__
+    ui->clearButton->setIcon(QIcon(":/icons/edit-clear.svg"));
+    ui->plotterButton->setIcon(QIcon(":/icons/applications-graphics.svg"));
+    ui->sendButton->setIcon(QIcon(":/icons/network-transmit.svg"));
+    ui->monitorButton->setIcon(QIcon(":/icons/network-receive.svg"));
+    ui->portReload->setIcon(QIcon(":/icons/reload.svg"));
+#endif
 }
 
 void MainWindow::handleReloadPorts() {
