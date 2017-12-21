@@ -22,8 +22,7 @@ namespace Ui {
 class PlotterView;
 }
 
-class PlotterView : public QDialog
-{
+class PlotterView : public QDialog {
     Q_OBJECT
 public:
     explicit PlotterView(QWidget *parent = 0);

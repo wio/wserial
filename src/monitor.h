@@ -14,8 +14,7 @@
 #include <QThread>
 #include <QMutex>
 
-class Monitor : public QObject
-{
+class Monitor : public QObject {
     Q_OBJECT
 public:
     /**

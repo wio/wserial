@@ -25,8 +25,8 @@ PlotterView::PlotterView(QWidget *parent) :
     chartView(new QChartView),
     axisX(new QValueAxis),
     axisY(new QValueAxis),
-    currX(0)
-{
+    currX(0) {
+
     ui->setupUi(this);
     chartView->setRenderHint(QPainter::Antialiasing);
     ui->verticalLayout->insertWidget(0, chartView);
@@ -98,7 +98,6 @@ void PlotterView::plotPoint(const qreal val, const int lineIndex, const bool inc
     }
 }
 
-PlotterView::~PlotterView()
-{
+PlotterView::~PlotterView() {
     delete ui;
 }

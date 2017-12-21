@@ -26,8 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_monitor(new Monitor),
-    m_plotterView(nullptr)
-{
+    m_plotterView(nullptr) {
+
     ui->setupUi(this);
     QList<qint32> baudRates {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
     for (auto baudRate : baudRates) {
@@ -96,8 +96,7 @@ void MainWindow::handlePlotter(bool checked) {
 void MainWindow::handleSend() {
     if (ui->lineEdit->text().length() != 0 &&
             m_availablePorts.length() != 0 &&
-            tryOpen())
-    {
+            tryOpen()) {
         m_monitor->m_serialPort.write(ui->lineEdit->text().toUtf8());
         if (m_monitor->m_serialPort.error() == QSerialPort::WriteError || !m_monitor->m_serialPort.waitForBytesWritten(5000)) {
             handleError("Failed to write to port");
@@ -142,8 +141,7 @@ void MainWindow::closeEvent(QCloseEvent*) {
     }
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
 }
 
