@@ -12,7 +12,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtSerialPort/QSerialPort>
-#include <QDebug>
 #include <QComboBox>
 #include <QToolButton>
 #include <QCheckBox>
@@ -21,7 +20,6 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QLineEdit>
-#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
