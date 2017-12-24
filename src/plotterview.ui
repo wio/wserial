@@ -14,8 +14,32 @@
    <string>Serial Plotter</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="leftMargin">
+      <number>9</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>9</number>
+     </property>
+     <property name="bottomMargin">
+      <number>9</number>
+     </property>
      <item>
       <widget class="QToolButton" name="clearButton">
        <property name="toolTip">
@@ -31,7 +55,47 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QToolButton" name="bestFitButton">
+       <property name="toolTip">
+        <string>Adjust graph for best fit</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset theme="zoom-fit-best"/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="overflowLabel">
+       <property name="text">
+        <string>Overflow:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="bestFitRadio">
+       <property name="text">
+        <string>Best &amp;fit</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="maxMinRadio">
+       <property name="text">
+        <string>Ma&amp;x and min only</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="rangeLabel">
        <property name="text">
         <string>X-axis Range</string>
        </property>
@@ -50,8 +114,8 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
-         <height>0</height>
+         <width>130</width>
+         <height>29</height>
         </size>
        </property>
        <property name="minimum">

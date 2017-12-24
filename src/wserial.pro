@@ -27,12 +27,12 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     plotterview.cpp \
-    monitor.cpp
+    worker.cpp
 
 HEADERS += \
         mainwindow.h \
     plotterview.h \
-    monitor.h
+    worker.h
 
 FORMS += \
         mainwindow.ui \
