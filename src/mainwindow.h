@@ -113,12 +113,12 @@ private:
     /**
      * Worker object which processes incoming data off the main thread
      */
-    Worker* worker;
+    Worker* m_worker;
 
     /**
      * Thread for the worker object
      */
-    QThread workerThread;
+    QThread m_workerThread;
 
     /**
      * Qt UI object that gives access the the UI form

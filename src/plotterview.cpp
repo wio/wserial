@@ -23,42 +23,40 @@ using namespace QtCharts;
 PlotterView::PlotterView(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PlotterView),
-    chartView(new QChartView),
-    axisX(new QValueAxis),
-    axisY(new QValueAxis),
-    currX(0) {
+    m_chartView(new QChartView),
+    m_axisX(new QValueAxis),
+    m_axisY(new QValueAxis),
+    m_currX(0) {
 
     ui->setupUi(this);
-    chartView->setRenderHint(QPainter::Antialiasing);
-    ui->verticalLayout->insertWidget(0, chartView);
+    m_chartView->setRenderHint(QPainter::Antialiasing);
+    ui->verticalLayout->insertWidget(0, m_chartView);
 
-    chart = chartView->chart();
-    chart->layout()->setContentsMargins(0, 0, 0, 0);
-    chart->setBackgroundVisible(false);
+    m_chart = m_chartView->chart();
+    m_chart->layout()->setContentsMargins(0, 0, 0, 0);
+    m_chart->setBackgroundVisible(false);
     auto foregroundColor = QApplication::palette().text().color();
-    chart->legend()->setLabelBrush(foregroundColor);
+    m_chart->legend()->setLabelBrush(foregroundColor);
 
     ui->xRangeSpinBox->setValue(DEFAULTXRANGE);
-    axisX->setRange(0, DEFAULTXRANGE);
-    axisX->setLabelsBrush(foregroundColor);
-    axisY->setRange(-YMAGNITUDEMAX, YMAGNITUDEMAX);
-    axisY->setLabelsBrush(foregroundColor);
-    chart->setAxisX(axisX);
-    chart->setAxisY(axisY);
+    m_axisX->setRange(0, DEFAULTXRANGE);
+    m_axisX->setLabelsBrush(foregroundColor);
+    m_axisY->setRange(-YMAGNITUDEMAX, YMAGNITUDEMAX);
+    m_axisY->setLabelsBrush(foregroundColor);
+    m_chart->setAxisX(m_axisX);
+    m_chart->setAxisY(m_axisY);
 
     connect(ui->clearButton, &QToolButton::released, this, &PlotterView::clear);
     connect(ui->xRangeSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &PlotterView::handleChangeXRange);
     connect(ui->bestFitButton, &QToolButton::released, this, &PlotterView::bestFit);
 
-#if defined _WIN32 || defined _WIN64 || defined(__APPLE__)
-    ui->clearButton->setIcon(QIcon(":/icons/user-trash.svg"));
-    ui->bestFitButton->setIcon(QIcon(":/icons/zoom-fit-best.svg"));
-#endif
+    ui->clearButton->setIcon(QIcon::fromTheme("user-trash", QIcon(":/icons/user-trash.svg")));
+    ui->bestFitButton->setIcon(QIcon::fromTheme("zoom-fit-best", QIcon(":/icons/zoom-fit-best.svg")));
 }
 
 void PlotterView::bestFit() {
     int xRange = ui->xRangeSpinBox->value();
-    if (lines.length() == 0) return;
+    if (m_lines.length() == 0) return;
     bool maxLeftFound = false;
     bool minLeftFound = false;
     bool maxRightFound = false;
@@ -67,12 +65,12 @@ void PlotterView::bestFit() {
     qreal minLeft;
     qreal maxRight;
     qreal minRight;
-    for (int i = 0; i < lines.length(); ++i) {
-        auto line = lines[i];
+    for (int i = 0; i < m_lines.length(); ++i) {
+        auto line = m_lines[i];
         auto pts = line->pointsVector();
-        int subtracted = currX - xRange;
+        int subtracted = m_currX - xRange;
         if (subtracted < 0) subtracted = 0;
-        int lineStart = linesStart[i];
+        int lineStart = m_linesStart[i];
         subtracted -= lineStart;
         if (subtracted >= 0) {
             if (subtracted == pts.length()) {
@@ -96,7 +94,7 @@ void PlotterView::bestFit() {
                 maxLeftFound = true;
             }
         }
-        subtracted = currX - lineStart;
+        subtracted = m_currX - lineStart;
         if (subtracted == pts.length()) {
             --subtracted;
         }
@@ -154,11 +152,11 @@ void PlotterView::bestFit() {
 }
 
 inline void PlotterView::yMinSelect(const qreal& min) {
-    axisY->setMin((min - CHART_MARGIN * axisY->max()) / (1 - CHART_MARGIN));
+    m_axisY->setMin((min - CHART_MARGIN * m_axisY->max()) / (1 - CHART_MARGIN));
 }
 
 inline void PlotterView::yMaxSelect(const qreal& max) {
-    axisY->setMax((max - CHART_MARGIN * axisY->min()) / (1 - CHART_MARGIN));
+    m_axisY->setMax((max - CHART_MARGIN * m_axisY->min()) / (1 - CHART_MARGIN));
 }
 
 /**
@@ -188,67 +186,67 @@ inline void PlotterView::yMaxSelect(const qreal& max) {
  *
  */
 inline void PlotterView::yRangeSelect(const qreal& a, const qreal& b) {
-    axisY->setRange(a - (b - a) * CHART_MARGIN / (1 - 2 * CHART_MARGIN), b + (b - a) * CHART_MARGIN / (1 - 2 * CHART_MARGIN));
+    m_axisY->setRange(a - (b - a) * CHART_MARGIN / (1 - 2 * CHART_MARGIN), b + (b - a) * CHART_MARGIN / (1 - 2 * CHART_MARGIN));
 }
 
 void PlotterView::handleChangeXRange(const int xRange) {
     // find the x value exactly one range before
-    int oneRangeBefore = currX - xRange;
+    int oneRangeBefore = m_currX - xRange;
     if (oneRangeBefore >= 0) {
         // we have data exactly one range before, so we can adjust accordingly
-        axisX->setRange(oneRangeBefore, currX);
+        m_axisX->setRange(oneRangeBefore, m_currX);
     } else {
         // we set the range normally
-        axisX->setRange(0, xRange);
+        m_axisX->setRange(0, xRange);
     }
 }
 
 void PlotterView::clear() {
-    chart->removeAllSeries();
-    lines.clear();
-    linesStart.clear();
-    linesLastX.clear();
-    currX = 0;
-    axisX->setRange(0, ui->xRangeSpinBox->value());
-    axisY->setRange(-YMAGNITUDEMAX, YMAGNITUDEMAX);
+    m_chart->removeAllSeries();
+    m_lines.clear();
+    m_linesStart.clear();
+    m_linesLastX.clear();
+    m_currX = 0;
+    m_axisX->setRange(0, ui->xRangeSpinBox->value());
+    m_axisY->setRange(-YMAGNITUDEMAX, YMAGNITUDEMAX);
 }
 
 void PlotterView::plotPoint(const qreal val, const int lineIndex, const bool increment) {
     QLineSeries* currLine;
-    if (lineIndex == lines.length()) {
+    if (lineIndex == m_lines.length()) {
         // this is a new line
         currLine = new QLineSeries;
-        lines << currLine;
-        linesStart << currX;
-        linesLastX << currX;
+        m_lines << currLine;
+        m_linesStart << m_currX;
+        m_linesLastX << m_currX;
         currLine->setUseOpenGL();
-        chart->addSeries(currLine);
-        currLine->attachAxis(chart->axisX());
-        currLine->attachAxis(chart->axisY());
-        currLine->append(currX, val);
+        m_chart->addSeries(currLine);
+        currLine->attachAxis(m_chart->axisX());
+        currLine->attachAxis(m_chart->axisY());
+        currLine->append(m_currX, val);
     } else {
-        currLine = lines[lineIndex];
-        QPointF newPoint(currX, val);
+        currLine = m_lines[lineIndex];
+        QPointF newPoint(m_currX, val);
         currLine->append(newPoint);
         // get the position of the point on the chart;
-        auto position = chart->mapToPosition(newPoint);
-        auto plotArea = chart->plotArea();
+        auto position = m_chart->mapToPosition(newPoint);
+        auto plotArea = m_chart->plotArea();
         if (position.x() > plotArea.right()) {
             // scroll point into view
-            chart->scroll(position.x() - plotArea.right(), 0);
+            m_chart->scroll(position.x() - plotArea.right(), 0);
         }
-        linesLastX[lineIndex] = currX;
+        m_linesLastX[lineIndex] = m_currX;
     }
 
     currLine->setName(QString("%1").arg(val));
     // adjust the chart when the value is out of range
-    if (val > axisY->max()) {
+    if (val > m_axisY->max()) {
         if (ui->bestFitRadio->isChecked()) {
             bestFit();
         } else {
             yMaxSelect(val);
         }
-    } else if (val < axisY->min()) {
+    } else if (val < m_axisY->min()) {
         if (ui->bestFitRadio->isChecked()) {
             bestFit();
         } else {
@@ -256,15 +254,15 @@ void PlotterView::plotPoint(const qreal val, const int lineIndex, const bool inc
         }
     }
     if (increment) {
-        for (int i = 0; i < lines.length(); ++i) {
-            auto line = lines[i];
-            if (linesLastX[i] != currX) {
-                linesLastX[i] = currX;
-                line->append(currX, 0);
+        for (int i = 0; i < m_lines.length(); ++i) {
+            auto line = m_lines[i];
+            if (m_linesLastX[i] != m_currX) {
+                m_linesLastX[i] = m_currX;
+                line->append(m_currX, 0);
                 line->setName("0");
             }
         }
-        ++currX;
+        ++m_currX;
     }
 }
 

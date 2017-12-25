@@ -46,10 +46,6 @@
             <property name="text">
              <string>...</string>
             </property>
-            <property name="icon">
-             <iconset theme="applications-graphics">
-              <normaloff>.</normaloff>.</iconset>
-            </property>
             <property name="checkable">
              <bool>true</bool>
             </property>
@@ -63,10 +59,6 @@
             <property name="text">
              <string>...</string>
             </property>
-            <property name="icon">
-             <iconset theme="edit-clear">
-              <normaloff>.</normaloff>.</iconset>
-            </property>
            </widget>
           </item>
           <item>
@@ -76,10 +68,6 @@
             </property>
             <property name="text">
              <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset theme="network-receive">
-              <normaloff>.</normaloff>.</iconset>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -106,10 +94,6 @@
           </property>
           <property name="text">
            <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset theme="network-transmit">
-            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -152,10 +136,6 @@
           <property name="text">
            <string>...</string>
           </property>
-          <property name="icon">
-           <iconset theme="reload">
-            <normaloff>.</normaloff>.</iconset>
-          </property>
          </widget>
         </item>
         <item>
@@ -176,16 +156,6 @@
      </layout>
     </item>
    </layout>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>640</width>
-     <height>21</height>
-    </rect>
-   </property>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

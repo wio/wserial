@@ -64,42 +64,42 @@ private:
     /**
      * The chart view Qt widget which lets us draw line graphs
      */
-    QChartView* chartView;
+    QChartView* m_chartView;
 
     /**
      * The actual chart inside the chart widget on which we can plot lines
      */
-    QChart* chart;
+    QChart* m_chart;
 
     /**
      * x-axis
      */
-    QValueAxis* axisX;
+    QValueAxis* m_axisX;
 
     /**
      * y-axis
      */
-    QValueAxis* axisY;
+    QValueAxis* m_axisY;
 
     /**
      * The list of line series
      */
-    QVector<QLineSeries*> lines;
+    QVector<QLineSeries*> m_lines;
 
     /**
      * The x value at which each line starts
      */
-    QVector<int> linesStart;
+    QVector<int> m_linesStart;
 
     /**
      * The last plotted x-value of the given line
      */
-    QVector<int> linesLastX;
+    QVector<int> m_linesLastX;
 
     /**
      * The current x-value
      */
-    int currX;
+    int m_currX;
 
     /**
      * Given a minimum limit of the graph, calculates and sets a range [x, y],

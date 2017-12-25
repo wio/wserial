@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     QList<qint32> baudRates {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
     for (auto baudRate : baudRates) {
-        ui->baudRate->addItem(QString("%1").arg(baudRate), baudRate);
+        ui->baudRate->addItem(QString::number(baudRate), baudRate);
     }
     ui->baudRate->setCurrentIndex(3);
     loadPortsAndSet();
@@ -40,8 +40,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->clearButton, &QToolButton::released, ui->plainTextEdit, &QPlainTextEdit::clear);
     connect(ui->sendButton, &QToolButton::released, this, &MainWindow::handleSend);
     connect(ui->portReload, &QToolButton::released, this, &MainWindow::handleReloadPorts);
-    connect(ui->port, static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, &MainWindow::handlePortChanged);
-    connect(ui->baudRate, static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, &MainWindow::handleBaudRateChanged);
+    connect(ui->port, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::handlePortChanged);
+    connect(ui->baudRate, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::handleBaudRateChanged);
     connect(ui->lineEdit, &QLineEdit::returnPressed, this, &MainWindow::handleSend);
     connect(ui->plotterButton, &QToolButton::toggled, this, &MainWindow::handlePlotterToggled);
     connect(&m_serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
@@ -53,19 +53,16 @@ MainWindow::MainWindow(QWidget *parent) :
         m_monitorVerticalScrollBarGrabbing = false;
     });
 
-    worker = new Worker;
-    worker->moveToThread(&workerThread);
-    workerThread.start();
-    connect(this, &MainWindow::sendToWorker, worker, &Worker::processData);
+    m_worker = new Worker;
+    m_worker->moveToThread(&m_workerThread);
+    m_workerThread.start();
+    connect(this, &MainWindow::sendToWorker, m_worker, &Worker::processData);
 
-// Apply bundled icons on Windows and macOS
-#if defined _WIN32 || defined __APPLE__
-    ui->clearButton->setIcon(QIcon(":/icons/edit-clear.svg"));
-    ui->plotterButton->setIcon(QIcon(":/icons/applications-graphics.svg"));
-    ui->sendButton->setIcon(QIcon(":/icons/network-transmit.svg"));
-    ui->monitorButton->setIcon(QIcon(":/icons/network-receive.svg"));
-    ui->portReload->setIcon(QIcon(":/icons/reload.svg"));
-#endif
+    ui->clearButton->setIcon(QIcon::fromTheme("edit-clear", QIcon(":/icons/edit-clear.svg")));
+    ui->plotterButton->setIcon(QIcon::fromTheme("application-graphics", QIcon(":/icons/applications-graphics.svg")));
+    ui->sendButton->setIcon(QIcon::fromTheme("network-transmit", QIcon(":/icons/network-transmit.svg")));
+    ui->monitorButton->setIcon(QIcon::fromTheme("network-receive", QIcon(":/icons/network-receive.svg")));
+    ui->portReload->setIcon(QIcon::fromTheme("reload", QIcon(":/icons/reload.svg")));
 }
 
 void MainWindow::closeEvent(QCloseEvent*) {
@@ -74,8 +71,9 @@ void MainWindow::closeEvent(QCloseEvent*) {
         m_plotterView->close();
         delete m_plotterView;
     }
-    workerThread.quit();
-    workerThread.wait();
+    delete m_worker;
+    m_workerThread.quit();
+    m_workerThread.wait();
 }
 
 MainWindow::~MainWindow() {
@@ -127,11 +125,11 @@ void MainWindow::handlePlotterToggled(bool checked) {
         m_plotterView = new PlotterView;
         m_plotterView->move(x() + 10 + width(), y());
         m_plotterView->show();
-        worker->plotEnabled = true;
-        connect(worker, &Worker::plotPoint, m_plotterView, &PlotterView::plotPoint);
+        m_worker->plotEnabled = true;
+        connect(m_worker, &Worker::plotPoint, m_plotterView, &PlotterView::plotPoint);
         connect(m_plotterView, &PlotterView::finished, ui->plotterButton, &QToolButton::setChecked);
     } else {
-        worker->plotEnabled = false;
+        m_worker->plotEnabled = false;
         m_plotterView->close();
         delete m_plotterView;
         m_plotterView = nullptr;
@@ -226,7 +224,7 @@ void MainWindow::loadPortsAndSet() {
 inline void MainWindow::startMonitor() {
     if (tryOpen()) {
         m_readFirstPass = true;
-        connect(worker, &Worker::output, this, &MainWindow::output);
+        connect(m_worker, &Worker::output, this, &MainWindow::output);
         connect(&m_serialPort, &QSerialPort::readyRead, this, &MainWindow::handleReadyRead);
     }
 }
@@ -236,7 +234,7 @@ inline void MainWindow::stopMonitor() {
         m_serialPort.close();
     }
     disconnect(&m_serialPort, &QSerialPort::readyRead, this, &MainWindow::handleReadyRead);
-    disconnect(worker, &Worker::output, this, &MainWindow::output);
+    disconnect(m_worker, &Worker::output, this, &MainWindow::output);
 }
 
 inline void MainWindow::resetMonitor() {
