@@ -25,8 +25,22 @@ class PlotterView;
 class PlotterView : public QDialog {
     Q_OBJECT
 public:
+    /**
+     * Default constructor
+     *
+     * @param parent the parent QWidget for reference counting
+     */
     explicit PlotterView(QWidget *parent = 0);
+
+    /**
+     * Default destructor
+     */
     ~PlotterView();
+
+    /**
+     * Qt UI object that gives access the the UI form
+     */
+    Ui::PlotterView *ui;
 
 public slots:
     /**
@@ -49,18 +63,7 @@ public slots:
      * @param xRange the new x-axis range
      */
     void handleChangeXRange(const int xRange);
-
-    /**
-     * Takes the visible portion of the graph,
-     * and tries to fit it as snugly as possible within the given margins
-     */
-    void bestFit();
 private:
-    /**
-     * Qt UI object that gives access the the UI form
-     */
-    Ui::PlotterView *ui;
-
     /**
      * The chart view Qt widget which lets us draw line graphs
      */
@@ -100,6 +103,19 @@ private:
      * The current x-value
      */
     int m_currX;
+
+    /**
+     * Takes the visible portion of the graph,
+     * and tries to fit it as snugly as possible within the given margins
+     */
+    void bestFit();
+
+    /**
+     * Helper function to create and configure a new QLineSeries
+     *
+     * @return pointer to the newly allocated QLineSeries
+     */
+    inline QLineSeries* createLine();
 
     /**
      * Given a minimum limit of the graph, calculates and sets a range [x, y],

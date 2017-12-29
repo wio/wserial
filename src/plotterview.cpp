@@ -211,18 +211,28 @@ void PlotterView::clear() {
     m_axisY->setRange(-YMAGNITUDEMAX, YMAGNITUDEMAX);
 }
 
+inline QLineSeries* PlotterView::createLine() {
+    QLineSeries* newLine = new QLineSeries;
+    m_lines << newLine;
+    m_linesStart << m_currX;
+    m_linesLastX << m_currX;
+    newLine->setUseOpenGL();
+    m_chart->addSeries(newLine);
+    newLine->attachAxis(m_chart->axisX());
+    newLine->attachAxis(m_chart->axisY());
+    return newLine;
+}
+
 void PlotterView::plotPoint(const qreal val, const int lineIndex, const bool increment) {
     QLineSeries* currLine;
-    if (lineIndex == m_lines.length()) {
-        // this is a new line
-        currLine = new QLineSeries;
-        m_lines << currLine;
-        m_linesStart << m_currX;
-        m_linesLastX << m_currX;
-        currLine->setUseOpenGL();
-        m_chart->addSeries(currLine);
-        currLine->attachAxis(m_chart->axisX());
-        currLine->attachAxis(m_chart->axisY());
+    int lineDeficit = lineIndex - m_lines.length();
+    if (lineDeficit >= 0) {
+        // need to add new lines
+        for (int i = 0; i < lineDeficit; i++) {
+            QLineSeries* newLine = createLine();
+            newLine->append(m_currX, 0);
+        }
+        currLine = createLine();
         currLine->append(m_currX, val);
     } else {
         currLine = m_lines[lineIndex];

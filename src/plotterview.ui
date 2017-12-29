@@ -80,7 +80,7 @@
      <item>
       <widget class="QRadioButton" name="maxMinRadio">
        <property name="text">
-        <string>Ma&amp;x and min only</string>
+        <string>E&amp;xtremes only</string>
        </property>
        <property name="checked">
         <bool>true</bool>
