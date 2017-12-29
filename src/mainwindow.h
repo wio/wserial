@@ -25,7 +25,21 @@ class MainWindow;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
+    /**
+     * Qt UI object that gives access the the UI form
+     */
+    Ui::MainWindow *ui;
+
+    /**
+     * Default constructor
+     *
+     * @param parent the parent QWidget for reference counting
+     */
     explicit MainWindow(QWidget *parent = 0);
+
+    /**
+     * Default destructor
+     */
     ~MainWindow();
 
 public slots:
@@ -95,6 +109,15 @@ public slots:
     void handleSend();
 
     /**
+     * Handles the monitor slider being pressed
+     */
+    void handleSliderPressed();
+
+    /**
+     * Handles the monitor slider being released
+     */
+    void handleSliderReleased();
+    /**
      * Updates the textbox, and handles auto-scrolling
      *
      * @param val new string to be appended to the textbox
@@ -119,11 +142,6 @@ private:
      * Thread for the worker object
      */
     QThread m_workerThread;
-
-    /**
-     * Qt UI object that gives access the the UI form
-     */
-    Ui::MainWindow *ui;
 
     /**
      * List of available ports from last query

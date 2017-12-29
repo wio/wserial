@@ -20,6 +20,14 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QLineEdit>
+#include <QDebug>
+
+// Logging modes
+#define QMESSAGE 0
+#define QDEBUG 1
+#define STDOUT 2
+#define STDERR 3
+#define SILENT 4
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -29,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_monitorVerticalScrollBarGrabbing(false) {
 
     ui->setupUi(this);
-    QList<qint32> baudRates {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
+    qint32 baudRates[] = {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
     for (auto baudRate : baudRates) {
         ui->baudRate->addItem(QString::number(baudRate), baudRate);
     }
@@ -46,12 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->plotterButton, &QToolButton::toggled, this, &MainWindow::handlePlotterToggled);
     connect(&m_serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
 
-    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderPressed, [this]() {
-        m_monitorVerticalScrollBarGrabbing = true;
-    });
-    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderReleased, [this]() {
-        m_monitorVerticalScrollBarGrabbing = false;
-    });
+    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderPressed, this, &MainWindow::handleSliderPressed);
+    connect(ui->plainTextEdit->verticalScrollBar(), &QScrollBar::sliderReleased, this, &MainWindow::handleSliderReleased);
 
     m_worker = new Worker;
     m_worker->moveToThread(&m_workerThread);
@@ -67,10 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::closeEvent(QCloseEvent*) {
     stopMonitor();
-    if (m_plotterView != nullptr) {
-        m_plotterView->close();
-        delete m_plotterView;
-    }
     delete m_worker;
     m_workerThread.quit();
     m_workerThread.wait();
@@ -122,17 +122,19 @@ void MainWindow::handleReadyRead() {
 
 void MainWindow::handlePlotterToggled(bool checked) {
     if (checked) {
-        m_plotterView = new PlotterView;
+        if (m_plotterView == nullptr) {
+            m_plotterView = new PlotterView(this);
+        }
+        connect(m_worker, &Worker::plotPoint, m_plotterView, &PlotterView::plotPoint);
+        connect(m_plotterView, &PlotterView::finished, ui->plotterButton, &QToolButton::setChecked);
         m_plotterView->move(x() + 10 + width(), y());
         m_plotterView->show();
         m_worker->plotEnabled = true;
-        connect(m_worker, &Worker::plotPoint, m_plotterView, &PlotterView::plotPoint);
-        connect(m_plotterView, &PlotterView::finished, ui->plotterButton, &QToolButton::setChecked);
     } else {
         m_worker->plotEnabled = false;
         m_plotterView->close();
-        delete m_plotterView;
-        m_plotterView = nullptr;
+        disconnect(m_worker, &Worker::plotPoint, m_plotterView, &PlotterView::plotPoint);
+        disconnect(m_plotterView, &PlotterView::finished, ui->plotterButton, &QToolButton::setChecked);
     }
 }
 
@@ -145,6 +147,14 @@ void MainWindow::handleSend() {
             ui->lineEdit->clear();
         }
     }
+}
+
+void MainWindow::handleSliderPressed() {
+    m_monitorVerticalScrollBarGrabbing = true;
+}
+
+void MainWindow::handleSliderReleased() {
+    m_monitorVerticalScrollBarGrabbing = false;
 }
 
 void MainWindow::handleError(QSerialPort::SerialPortError err) {
@@ -247,5 +257,15 @@ inline bool MainWindow::tryOpen() {
 }
 
 inline void MainWindow::outputError(const QString& errMesg) {
+#if LOGGING_MODE == QMESSAGE
     QMessageBox::critical(this, "Error", errMesg, QMessageBox::Ok);
+#elif LOGGING_MODE == QDEBUG
+    qDebug() << errMesg;
+#elif LOGGING_MODE == STDOUT
+    QTextStream(stdout) << errMesg;
+#elif LOGGING_MODE == STDERR
+    QTextStream(stderr) << errMesg;
+#elif LOGGING_MODE == SILENT
+    Q_UNUSED(errMesg);
+#endif
 }
