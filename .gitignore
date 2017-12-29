@@ -50,3 +50,9 @@ CMakeLists.txt.user*
 
 # Dolphin
 .directory
+
+# Coverage
+test
+coverage
+*.gcda
+*.gcno
