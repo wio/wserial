@@ -2,15 +2,19 @@
 
 WSerial is a Serial Monitor and a Serial Plotter to visualize data from devices transmitting data using Serial. This is developed at [**Waterloop**](https://teamwaterloop.ca/) and is one of the best-in-class GUI design out there. You can either clone this project and follow the development instructions to build it locally or install our prebuilt binaries (they will be added soon).
 
+![Screenshot](screenshot.png "Screenshot")
+
 ## Features
 
 - Scales well on HDPI devices
 - Built using Qt so, it compiles directly on your machine
-- Uses GPU instead of CPU for plotting data on the plotter
+- Uses GPU with OpenGL acceleration instead of CPU for plotting data on the plotter for smooth user experience
 - Flexibility to make the range of X Axis values of the plotter longer and shorter
-- Y Axis scales based on the highest and the lowest value encountered on the screen
+- Y Axis scales based on the highest and the lowest value encountered on the screen, two options available for fine-tuning:
+    - "Best fit" takes the visible portion of the plot and fits it as snugly as it can on the Y Axis
+    - "Extremes only" (default) just increases the maximum/minimum limit of the Y Axis respectively when a maximum/minimum is reached
 - Allows the opening of Serial window and the plotter at the same time
-- Allows the user to pause the Serial ouput on the screen
+- Allows the user to pause the Serial output on the screen
 - Allows for changing ports and baudrate
 
 ## Development Instructions for Windows

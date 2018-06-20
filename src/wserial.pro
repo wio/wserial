@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport charts
+QT       += core gui serialport charts testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,12 +27,27 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     plotterview.cpp \
-    monitor.cpp
+    worker.cpp
+
+test {
+    SOURCES -= main.cpp
+    SOURCES += tests/test.cpp
+
+    HEADERS += tests/test.h
+
+    TARGET = test
+
+    QMAKE_CXXFLAGS += -g -Wall -fprofile-arcs -ftest-coverage -O0
+
+    QMAKE_LFLAGS += -g -Wall -fprofile-arcs -ftest-coverage  -O0
+
+    LIBS += -lgcov
+}
 
 HEADERS += \
         mainwindow.h \
     plotterview.h \
-    monitor.h
+    worker.h
 
 FORMS += \
         mainwindow.ui \

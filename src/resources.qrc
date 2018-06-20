@@ -6,5 +6,6 @@
         <file>icons/network-receive.svg</file>
         <file>icons/reload.svg</file>
         <file>icons/edit-clear.svg</file>
+        <file>icons/zoom-fit-best.svg</file>
     </qresource>
 </RCC>
