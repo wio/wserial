@@ -4,5 +4,6 @@ before-install:
   - sudo add-apt-repository --yes ppa:beineri/opt-qt-5.11.1-bionic
   - sudo apt update -qq
   - sudo apt install -qq qt511base qt511charts-no-lgpl qt511serialport lcov
+  - source /opt/qt511/bin/qt511-env.sh
 script:
   - ./coverage.sh
