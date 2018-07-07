@@ -31,6 +31,10 @@ void PlotterViewTest::plotPointTest() {
     plotterView.clear();
 }
 
+MainWindowTest::MainWindowTest()
+    : mainWindow("", "", false)
+{}
+
 void MainWindowTest::initTestCase() {
     mainWindow.show();
 }
