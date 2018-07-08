@@ -6,6 +6,4 @@ before_script:
   - sudo apt update -qq
   - sudo apt install -qq qt511base qt511charts-no-lgpl qt511serialport libgl1-mesa-dev lcov
   - source /opt/qt511/bin/qt511-env.sh
-script:
-  - qmake --version
-  - ./coverage.sh
+script: xvfb-run ./coverage.sh
