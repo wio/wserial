@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 echo "Building test..."
 qmake -makefile -o test/Makefile src/wserial.pro -config test DEFINES+="LOGGING_MODE=QDEBUG"
 cd test
