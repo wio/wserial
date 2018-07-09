@@ -35,7 +35,7 @@ public:
      *
      * @param parent the parent QWidget for reference counting
      */
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(const QString& port, const QString& baudRate, const bool immediate);
 
     /**
      * Default destructor
@@ -182,7 +182,7 @@ private:
     /**
      * Fetches current port information, updates ui, and sets the current values in the monitor
      */
-    void loadPortsAndSet();
+    bool loadPortsAndSet(const QString& initialPort = "");
 
     /**
      * Updates the monitor output text box

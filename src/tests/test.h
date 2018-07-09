@@ -28,6 +28,9 @@ class MainWindowTest: public QObject {
     Q_OBJECT
     MainWindow mainWindow;
 
+public:
+    MainWindowTest();
+
 private slots:
     void initTestCase();
     void uiTests();

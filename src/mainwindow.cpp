@@ -20,7 +20,6 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QLineEdit>
-#include <QDebug>
 
 // Logging modes
 #define QMESSAGE 0
@@ -29,8 +28,7 @@
 #define STDERR 3
 #define SILENT 4
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
+MainWindow::MainWindow(const QString& port, const QString& baudRate, const bool immediate) :
     ui(new Ui::MainWindow),
     m_plotterView(nullptr),
     m_readFirstPass(true),
@@ -38,11 +36,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
     qint32 baudRates[] = {QSerialPort::Baud1200, QSerialPort::Baud2400, QSerialPort::Baud4800, QSerialPort::Baud9600, QSerialPort::Baud19200, QSerialPort::Baud38400, QSerialPort::Baud57600, QSerialPort::Baud115200};
+
+    const int parsedRate = baudRate.toInt();
+    int baudRateIndex = 3; // 9600 by default
+    int i = 0;
     for (auto baudRate : baudRates) {
+        if (parsedRate == baudRate) {
+            baudRateIndex = i;
+        }
         ui->baudRate->addItem(QString::number(baudRate), baudRate);
+        i++;
     }
-    ui->baudRate->setCurrentIndex(3);
-    loadPortsAndSet();
+    ui->baudRate->setCurrentIndex(baudRateIndex);
 
     connect(ui->monitorButton, &QToolButton::toggled, this, &MainWindow::handleMonitorToggled);
     connect(ui->clearButton, &QToolButton::released, ui->plainTextEdit, &QPlainTextEdit::clear);
@@ -61,11 +66,15 @@ MainWindow::MainWindow(QWidget *parent) :
     m_worker->moveToThread(&m_workerThread);
     m_workerThread.start();
     connect(this, &MainWindow::sendToWorker, m_worker, &Worker::processData);
+    if (loadPortsAndSet(port) && immediate) {
+        ui->monitorButton->setChecked(true);
+        startMonitor();
+    }
 
     ui->clearButton->setIcon(QIcon::fromTheme("edit-clear", QIcon(":/icons/edit-clear.svg")));
     ui->plotterButton->setIcon(QIcon::fromTheme("application-graphics", QIcon(":/icons/applications-graphics.svg")));
     ui->sendButton->setIcon(QIcon::fromTheme("network-transmit", QIcon(":/icons/network-transmit.svg")));
-    ui->monitorButton->setIcon(QIcon::fromTheme("network-receive", QIcon(":/icons/network-receive.svg")));
+    ui->monitorButton->setIcon(QIcon::fromTheme("media-playback-start", QIcon(":/icons/media-playback-start.svg")));
     ui->portReload->setIcon(QIcon::fromTheme("reload", QIcon(":/icons/reload.svg")));
 }
 
@@ -214,21 +223,28 @@ void MainWindow::output(const QString& val) {
     }
 }
 
-void MainWindow::loadPortsAndSet() {
+bool MainWindow::loadPortsAndSet(const QString& initialPort) {
     m_availablePorts = QSerialPortInfo::availablePorts();
+    m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
     if (m_availablePorts.length() == 0) {
         ui->sendButton->setEnabled(false);
         ui->monitorButton->setEnabled(false);
+        return false;
     } else {
         ui->sendButton->setEnabled(true);
         ui->monitorButton->setEnabled(true);
+        int index = 0;
         for (int i = 0; i < m_availablePorts.length(); ++i) {
             auto portInfo = m_availablePorts[i];
+            if (initialPort == portInfo.portName()) {
+                index = i;
+            }
             ui->port->addItem(QString("%1: %2").arg(portInfo.manufacturer()).arg(portInfo.portName()), i);
         }
-        m_serialPort.setPortName(m_availablePorts[ui->port->currentIndex()].portName());
+        ui->port->setCurrentIndex(index);
+        m_serialPort.setPortName(m_availablePorts[index].portName());
+        return true;
     }
-    m_serialPort.setBaudRate(ui->baudRate->currentData().toInt());
 }
 
 inline void MainWindow::startMonitor() {

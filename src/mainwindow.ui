@@ -43,9 +43,6 @@
           </item>
           <item>
            <widget class="QToolButton" name="plotterButton">
-            <property name="text">
-             <string>...</string>
-            </property>
             <property name="checkable">
              <bool>true</bool>
             </property>
@@ -56,18 +53,12 @@
             <property name="toolTip">
              <string>Clear output</string>
             </property>
-            <property name="text">
-             <string>...</string>
-            </property>
            </widget>
           </item>
           <item>
            <widget class="QToolButton" name="monitorButton">
             <property name="toolTip">
              <string>Monitor input</string>
-            </property>
-            <property name="text">
-             <string>...</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -91,9 +82,6 @@
          <widget class="QToolButton" name="sendButton">
           <property name="toolTip">
            <string>Send</string>
-          </property>
-          <property name="text">
-           <string>...</string>
           </property>
          </widget>
         </item>
